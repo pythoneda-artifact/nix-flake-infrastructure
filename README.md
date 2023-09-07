@@ -1,2 +1,2 @@
-# git-infrastructure
-Infrastructure layer for pythoneda-artifact/git
+# nix-flake-infrastructure
+Infrastructure layer for pythoneda-artifact/nix-flake

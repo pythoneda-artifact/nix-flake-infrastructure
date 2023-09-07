@@ -1,9 +1,9 @@
 """
-pythoneda/artifact/git/infrastructure/dbus/git_dbus_signal_emitter.py
+pythoneda/artifact/nix_flake/infrastructure/dbus/git_dbus_signal_emitter.py
 
-This file defines the GitDbusSignalEmitter class.
+This file defines the NixFlakeDbusSignalEmitter class.
 
-Copyright (C) 2023-today rydnr's pythoneda-artifact/git-infrastructure
+Copyright (C) 2023-today rydnr's pythoneda-artifact/nix-flake-infrastructure
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@ from pythoneda.shared.artifact_changes.events import ChangeStagingCodeDescribed
 from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeDescribed
 from typing import Dict
 
-class GitDbusSignalEmitter(DbusSignalEmitter):
+class NixFlakeDbusSignalEmitter(DbusSignalEmitter):
 
     """
-    A Port that emits git-artifact events as d-bus signals.
+    A Port that emits nix-flake-artifact events as d-bus signals.
 
-    Class name: GitDbusSignalEmitter
+    Class name: NixFlakeDbusSignalEmitter
 
     Responsibilities:
         - Connect to d-bus.
-        - Emit git-artifact events as d-bus signals.
+        - Emit nix-flake-artifact events as d-bus signals.
 
     Collaborators:
         - pythoneda.application.PythonEDA: Requests emitting events.
@@ -42,7 +42,7 @@ class GitDbusSignalEmitter(DbusSignalEmitter):
     """
     def __init__(self):
         """
-        Creates a new GitDbusSignalEmitter instance.
+        Creates a new NixFlakeDbusSignalEmitter instance.
         """
         super().__init__()
 

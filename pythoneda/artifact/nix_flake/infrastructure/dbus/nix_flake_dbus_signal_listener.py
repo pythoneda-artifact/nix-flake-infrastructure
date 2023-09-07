@@ -1,9 +1,9 @@
 """
-pythoneda/artifact/git/infrastructure/dbus/git_dbus_signal_listener.py
+pythoneda/artifact/nix_flake/infrastructure/dbus/nix_flake_dbus_signal_listener.py
 
-This file defines the GitDbusSignalListener class.
+This file defines the NixFlakeDbusSignalListener class.
 
-Copyright (C) 2023-today rydnr's pythoneda-artifact/git-infrastructure
+Copyright (C) 2023-today rydnr's pythoneda-artifact/nix-flake-infrastructure
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -25,16 +25,16 @@ from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusCha
 from pythoneda.infrastructure.dbus import DbusSignalListener
 from typing import Dict
 
-class GitDbusSignalListener(DbusSignalListener):
+class NixFlakeDbusSignalListener(DbusSignalListener):
 
     """
-    A PrimaryPort that listens to d-bus signals relevant to git-artifact.
+    A PrimaryPort that listens to d-bus signals relevant to nix-flake-artifact.
 
-    Class name: GitDbusSignalListener
+    Class name: NixFlakeDbusSignalListener
 
     Responsibilities:
         - Connect to d-bus.
-        - Listen to signals relevant to git-artifact.
+        - Listen to signals relevant to nix-flake-artifact.
 
     Collaborators:
         - pythoneda.application.pythoneda.PythonEDA: Receives relevant domain events.
@@ -43,7 +43,7 @@ class GitDbusSignalListener(DbusSignalListener):
 
     def __init__(self):
         """
-        Creates a new GitDbusSignalListener instance.
+        Creates a new NixFlakeDbusSignalListener instance.
         """
         super().__init__()
 

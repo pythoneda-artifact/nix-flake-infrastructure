@@ -1,9 +1,9 @@
 """
-pythoneda/artifact/git/infrastructure/__init__.py
+pythoneda/artifact/nix_flake/infrastructure/dbus/__init__.py
 
-This file ensures pythoneda.artifact.git.infrastructure is a namespace.
+This file ensures pythoneda.artifact.nix_flake.infrastructure.dbus is a namespace.
 
-Copyright (C) 2023-today rydnr's pythoneda-artifact/git-infrastructure
+Copyright (C) 2023-today rydnr's pythoneda-artifact/nix-flake-infrastructure
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,3 +19,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 __path__ = __import__('pkgutil').extend_path(__path__, __name__)
+
+from .nix_flake_dbus_signal_emitter import NixFlakeDbusSignalEmitter
+from .nix_flake_dbus_signal_listener import NixFlakeDbusSignalListener

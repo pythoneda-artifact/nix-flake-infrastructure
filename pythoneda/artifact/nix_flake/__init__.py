@@ -1,9 +1,9 @@
 """
-pythoneda/artifact/git/infrastructure/__init__.py
+pythoneda/artifact/nix_flake/__init__.py
 
-This file ensures pythoneda.artifact.git.infrastructure is a namespace.
+This file ensures pythoneda.artifact.nix_flake is a namespace.
 
-Copyright (C) 2023-today rydnr's pythoneda-artifact/git-infrastructure
+Copyright (C) 2023-today rydnr's pythoneda-artifact/nix-flake-infrastructure
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
