@@ -20,8 +20,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 from dbus_next import BusType, Message
 from pythoneda.event import Event
-from pythoneda.shared.artifact_changes.events import ChangeStagingCodeRequested
-from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeRequested
+from pythoneda.shared.artifact_changes.events import ChangeStagingCodeDescribed
+from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeDescribed
 from pythoneda.infrastructure.dbus import DbusSignalListener
 from typing import Dict
 
@@ -38,7 +38,7 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
 
     Collaborators:
         - pythoneda.application.pythoneda.PythonEDA: Receives relevant domain events.
-        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeRequested
+        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeDescribed
     """
 
     def __init__(self):
@@ -56,8 +56,8 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         :rtype: Dict
         """
         result = {}
-        key = self.__class__.full_class_name(ChangeStagingCodeRequested)
+        key = self.__class__.full_class_name(ChangeStagingCodeDescribed)
         result[key] = [
-            DbusChangeStagingCodeRequested, BusType.SYSTEM
+            DbusChangeStagingCodeDescribed, BusType.SYSTEM
         ]
         return result
