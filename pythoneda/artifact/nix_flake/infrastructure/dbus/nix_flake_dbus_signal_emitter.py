@@ -21,7 +21,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from dbus_next import BusType
 from pythoneda.event import Event
 from pythoneda.infrastructure.dbus import DbusSignalEmitter
-from pythoneda.shared.artifact_changes.events import ChangeStagingCodePackaged
+from pythoneda.shared.artifact_changes.events import ChangeStagingCodeExecutionPackaged, ChangeStagingCodePackaged
+from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeExecutionPackaged
 from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodePackaged
 from typing import Dict
 
@@ -39,6 +40,7 @@ class NixFlakeDbusSignalEmitter(DbusSignalEmitter):
     Collaborators:
         - pythoneda.application.PythonEDA: Requests emitting events.
         - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodePackaged
+        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeExecutionPackaged
     """
     def __init__(self):
         """
@@ -55,5 +57,7 @@ class NixFlakeDbusSignalEmitter(DbusSignalEmitter):
         result = {}
         key = self.__class__.full_class_name(ChangeStagingCodePackaged)
         result[key] = [ DbusChangeStagingCodePackaged, BusType.SYSTEM ]
+        key = self.__class__.full_class_name(ChangeStagingCodeExecutionPackaged)
+        result[key] = [ DbusChangeStagingCodeExecutionPackaged, BusType.SYSTEM ]
 
         return result

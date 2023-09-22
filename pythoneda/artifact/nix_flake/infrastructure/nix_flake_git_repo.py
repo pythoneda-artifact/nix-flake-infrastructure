@@ -18,12 +18,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-from cachetools import cached, TTLCache
+from joblib import Memory
 from datetime import datetime
 from pythoneda import BaseObject
 from pythoneda.artifact.nix_flake import NixFlakeRepo
+from pythoneda.artifact.nix_flake import CodeExecutionNixFlakeFactory
 from pythoneda.artifact.nix_flake.jupyterlab import JupyterlabCodeRequestNixFlakeFactory
-from pythoneda.shared.code_requests import CodeRequest
+from pythoneda.shared.code_requests import CodeExecutionNixFlake, CodeRequest
 from pythoneda.shared.code_requests.jupyterlab import JupyterlabCodeRequestNixFlake
 from pythoneda.shared.nix_flake import FlakeUtilsNixFlake, NixFlake, NixFlakeSpec, NixosNixFlake, PythonedaNixFlake, PythonedaSharedPythonedaBannerNixFlake, PythonedaSharedPythonedaDomainNixFlake
 import requests
@@ -43,7 +44,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         - None
     """
 
-    _tag_cache = TTLCache(maxsize=100, ttl=3600)
+    tag_cache = Memory('.nix_flake_git_repo_cache', verbose=0)
     _github_token = None
 
     def __init__(self):
@@ -63,7 +64,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         cls._github_token = token
 
     @classmethod
-    @cached(_tag_cache)
+    @tag_cache.cache
     def _cacheable_get_latest_github_tag(cls, repoOwner:str, repoName:str, prefix:str=None) -> str:
         """
         Retrieves the latest (chronologically) tag of a given repository, optionally matching given prefix.
@@ -76,6 +77,22 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: The latest tag, or None if the tags could not be retrieved.
         :rtype: str
         """
+        return cls._raw_get_latest_github_tag(repoOwner, repoName, prefix)
+
+    @classmethod
+    def _raw_get_latest_github_tag(cls, repoOwner:str, repoName:str, prefix:str=None) -> str:
+        """
+        Retrieves the latest (chronologically) tag of a given repository, optionally matching given prefix.
+        :param repoOwner: The owner of the repository.
+        :type repoOwner: str
+        :param repoName: The name of the repository.
+        :type repoName: str
+        :param prefix: The prefix of the tags we're interested in. Optional.
+        :type prefix: str
+        :return: The latest tag, or None if the tags could not be retrieved.
+        :rtype: str
+        """
+        print("in _raw!")
         result = None
         url = f"https://api.github.com/repos/{repoOwner}/{repoName}/tags"
         if cls._github_token is None:
@@ -96,6 +113,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             return None
 
         tags = response.json()
+        print(tags)
         if not tags:
             NixFlakeGitRepo.logger().error(f"No tags found for repository {repoOwner}/{repoName}.")
             return None
@@ -103,19 +121,22 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         # Store tags with their commit date
         tag_dates = {}
 
-        for tag in tags:
-            commit_url = tag["commit"]["url"]
-            commit_response = requests.get(commit_url, headers=headers)
+        if len(tags) == 1:
+            sorted_tags = [tag["name"] for tag in tags ]
+        else:
+            for tag in tags:
+                commit_url = tag["commit"]["url"]
+                commit_response = requests.get(commit_url, headers=headers)
 
-            if commit_response.status_code != 200:
-                continue
+                if commit_response.status_code != 200:
+                    continue
 
-            commit_data = commit_response.json()
-            commit_date = commit_data["commit"]["committer"]["date"]
-            tag_dates[tag["name"]] = datetime.fromisoformat(commit_date[:-1])  # Remove the 'Z'
+                commit_data = commit_response.json()
+                commit_date = commit_data["commit"]["committer"]["date"]
+                tag_dates[tag["name"]] = datetime.fromisoformat(commit_date[:-1])  # Remove the 'Z'
 
-        # Sort tags by date
-        sorted_tags = sorted(tag_dates, key=lambda k: tag_dates[k], reverse=True)
+            # Sort tags by date
+            sorted_tags = sorted(tag_dates, key=lambda k: tag_dates[k], reverse=True)
 
         if prefix is None:
             aux = sorted_tags
@@ -155,6 +176,35 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         parts = coordinates.split("/")
         return self.get_latest_github_tag(parts[0], parts[1])
 
+    def latest_Cachetools_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for cachetools.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "cachetools-")
+
+    def find_Cachetools_version(self, version:str) -> NixFlake:
+        """
+        Retrieves the latest version of the nix flake for cachetools.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "cachetools",
+            version,
+            f"github:rydnr/nix-flakes/cachetools-{version}?dir=cachetools",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
+            None,
+            "Nixpkgs' cachetools",
+            "https://github.com/tkem/cachetools/",
+            "mit",
+            [ ],
+            2014,
+            "https://github.com/tkem/cachetools/")
+
     def latest_DbusNext_version(self) -> str:
         """
         Retrieves the version of the latest Nix flake for dbus-next.
@@ -174,8 +224,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         return NixFlake(
             "dbus-next",
             version,
-            f"github:rydnr/nix-flakes/dbus-next/dbus-next-{version}?dir=dbus-next",
-            [],
+            f"github:rydnr/nix-flakes/dbus-next-{version}?dir=dbus-next",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Nixpkgs' dbus-next",
             "https://github.com/altdesktop/python-dbus-next",
@@ -183,6 +233,16 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             [ ],
             2019,
             "https://github.com/altdesktop/python-dbus-next")
+
+    def latest_code_execution(self, codeRequest:CodeRequest) -> CodeExecutionNixFlake:
+        """
+        Retrieves the latest version of the nix flake for executing code.
+        :param codeRequest: The code request.
+        :type codeRequest: pythoneda.shared.code_requests.CodeRequest
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.shared.code_requests.CodeExecutionNixFlake
+        """
+        return CodeExecutionNixFlakeFactory.instance().create(codeRequest, self.default_latest_flakes())
 
     def latest_Grpcio_version(self) -> str:
         """
@@ -203,8 +263,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         return NixFlake(
             "grpcio",
             version,
-            f"github:rydnr/nix-flakes/grpcio/grpcio-{version}?dir=grpcio",
-            [],
+            f"github:rydnr/nix-flakes/grpcio-{version}?dir=grpcio",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Nixpkgs' grpcio",
             "https://github.com/grpc/grpc",
@@ -231,25 +291,44 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         """
         return FlakeUtilsNixFlake(version)
 
-    def latest_Jupyterlab_for_code_requests_version(self) -> str:
+    def latest_Joblib_version(self) -> str:
         """
-        Retrieves the version of the latest Nix flake for Jupyterlab for code requests.
+        Retrieves the version of the latest Nix flake for joblib.
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("rydnr", "nix-flakes", "jupyterlab-")
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "joblib-")
 
-    def find_Jupyterlab_for_code_requests_version(self, version:str, codeRequest:CodeRequest) -> JupyterlabCodeRequestNixFlake:
+    def find_Joblib_version(self, version:str) -> NixFlake:
         """
-        Retrieves the latest version of the nix flake for Jupyterlab.
+        Retrieves the latest version of the nix flake for joblib.
         :param version: The version.
         :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "joblib",
+            version,
+            f"github:rydnr/nix-flakes/joblib-{version}?dir=joblib",
+            [],
+            None,
+            "Nixpkgs' joblib",
+            "https://github.com/joblib/joblib/",
+            "mit",
+            [ ],
+            2009,
+            "https://github.com/joblib/joblib")
+
+    def latest_Jupyterlab_for_code_requests(self, codeRequest:CodeRequest) -> JupyterlabCodeRequestNixFlake:
+        """
+        Retrieves the latest version of the nix flake for Jupyterlab.
         :param codeRequest: The code request.
         :type codeRequest: pythoneda.shared.code_requests.CodeRequest
         :return: Such flake, or None if not found.
         :rtype: pythoneda.shared.code_requests.jupyterlab.JupyterlabCodeRequestNixFlake
         """
-        return JupyterlabCodeRequestNixFlakeFactory.instance().create(codeRequest, version, self.default_latest_flakes())
+        return JupyterlabCodeRequestNixFlakeFactory.instance().create(codeRequest, self.default_latest_flakes())
 
     def latest_Jupyterlab_version(self) -> str:
         """
@@ -271,7 +350,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "jupyterlab",
             version,
             f"github:rydnr/nix-flakes/jupyterlab-{version}?dir=jupyterlab",
-            [],
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Nixpkgs' Jupyterlab",
             "https://jupyter.org",
@@ -300,7 +379,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "nbformat",
             version,
             f"github:rydnr/nix-flakes/nbformat-{version}?dir=nbformat",
-            [],
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Nixpkgs' Nbformat",
             "https://jupyter.org",
@@ -608,13 +687,99 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "D",
             "D")
 
+    def latest_PythonedaArtifactCodeRequestApplication_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for pythoneda-artifact/code-request-application.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("pythoneda-artifact", "code-request-application-artifact")
+
+    def find_PythonedaArtifactCodeRequestApplication_version(self, version:str) -> NixFlake:
+        """
+        Retrieves a specific version of the Nix flake for pythoneda-artifact/code-request-application.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.shared.nix_flake.NixFlake
+        """
+        return PythonedaNixFlake(
+            "pythoneda-artifact-code-request-application",
+            version,
+            f"github:pythoneda-artifact/code-request-application-artifact/{version}?dir=code-request-application",
+            self.default_latest_flakes() + [
+                self.latest_DbusNext(),
+                self.latest_Grpcio(),
+                self.latest_PythonedaArtifactCodeRequestInfrastructure(),
+                self.latest_PythonedaSharedArtifactChangesEvents(),
+                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
+                self.latest_PythonedaSharedArtifactChangesShared(),
+                self.latest_PythonedaSharedCodeRequestsEvents(),
+                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
+                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
+                self.latest_PythonedaSharedCodeRequestsShared(),
+                self.latest_PythonedaSharedGitShared(),
+                self.latest_PythonedaSharedNixFlakeShared(),
+                self.latest_PythonedaSharedPythonedaApplication(),
+                self.latest_PythonedaSharedPythonedaInfrastructure(),
+                self.latest_Requests(),
+                self.latest_Stringtemplate3()
+            ],
+            "Application layer for code requests",
+            "https://github.com/pythoneda-artifact/code-request-application",
+            "B",
+            "D",
+            "A")
+
+    def latest_PythonedaArtifactCodeRequestInfrastructure_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for pythoneda-artifact/code-request-infrastructure.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("pythoneda-artifact", "code-request-infrastructure-artifact")
+
+    def find_PythonedaArtifactCodeRequestInfrastructure_version(self, version:str) -> NixFlake:
+        """
+        Retrieves a specific version of the Nix flake for pythoneda-artifact/code-request-infrastructure.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.shared.nix_flake.NixFlake
+        """
+        return PythonedaNixFlake(
+            "pythoneda-artifact-code-request-infrastructure",
+            version,
+            f"github:pythoneda-artifact/code-request-infrastructure-artifact/{version}?dir=code-request-infrastructure",
+            self.default_latest_flakes() + [
+                self.latest_DbusNext(),
+                self.latest_Grpcio(),
+                self.latest_PythonedaSharedArtifactChangesEvents(),
+                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
+                self.latest_PythonedaSharedArtifactChangesShared(),
+                self.latest_PythonedaSharedCodeRequestsEvents(),
+                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
+                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
+                self.latest_PythonedaSharedCodeRequestsShared(),
+                self.latest_PythonedaSharedGitShared(),
+                self.latest_PythonedaSharedNixFlakeShared(),
+                self.latest_PythonedaSharedPythonedaInfrastructure(),
+                self.latest_Requests(),
+                self.latest_Stringtemplate3()
+            ],
+            "Infrastructure layer for code requests",
+            "https://github.com/pythoneda-artifact/code-request-infrastructure",
+            "B",
+            "D",
+            "I")
+
     def latest_PythonedaArtifactGit_version(self) -> str:
         """
         Retrieves the version of the latest Nix flake for pythoneda-artifact/git.
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "git")
+        return self.get_latest_github_tag("pythoneda-artifact", "git-artifact")
 
     def find_PythonedaArtifactGit_version(self, version:str) -> NixFlake:
         """
@@ -650,7 +815,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "git-application")
+        return self.get_latest_github_tag("pythoneda-artifact", "git-application-artifact")
 
     def find_PythonedaArtifactGitApplication_version(self, version:str) -> NixFlake:
         """
@@ -695,7 +860,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "git-infrastructure")
+        return self.get_latest_github_tag("pythoneda-artifact", "git-infrastructure-artifact")
 
     def find_PythonedaArtifactGitInfrastructure_version(self, version:str) -> NixFlake:
         """
@@ -738,7 +903,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "nix-flake")
+        return self.get_latest_github_tag("pythoneda-artifact", "nix-flake-artifact")
 
     def find_PythonedaArtifactNixFlake_version(self, version:str) -> NixFlake:
         """
@@ -769,7 +934,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "nix-flake-application")
+        return self.get_latest_github_tag("pythoneda-artifact", "nix-flake-application-artifact")
 
     def find_PythonedaArtifactNixFlakeApplication_version(self, version:str) -> NixFlake:
         """
@@ -814,7 +979,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: Such version.
         :rtype: str
         """
-        return self.get_latest_github_tag("pythoneda-artifact", "git-infrastructure")
+        return self.get_latest_github_tag("pythoneda-artifact", "git-infrastructure-artifact")
 
     def find_PythonedaArtifactNixFlakeInfrastructure_version(self, version:str) -> NixFlake:
         """
@@ -881,36 +1046,6 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "D",
             "D")
 
-    def latest_PythonedaSharedCodeRequestsJupyterlab_version(self) -> str:
-        """
-        Retrieves the version of the latest Nix flake for pythoneda-shared-code-requests/jupyterlab.
-        :return: Such version.
-        :rtype: str
-        """
-        return self.get_latest_github_tag("pythoneda-shared-code-requests", "jupyterlab-artifact")
-
-    def find_PythonedaSharedCodeRequestsEvents_version(self, version:str) -> NixFlake:
-        """
-        Retrieves a specific version of the Nix flake for pythoneda-shared-code-requests/events.
-        :param version: The version.
-        :type version: str
-        :return: Such flake, or None if not found.
-        :rtype: pythoneda.shared.nix_flake.NixFlake
-        """
-        return PythonedaNixFlake(
-            "pythoneda-shared-code-requests-events",
-            version,
-            f"github:pythoneda-shared-code-requests/events-artifact/{version}?dir=events",
-            self.default_latest_flakes() + [
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsShared()
-            ],
-            "Events relevant to code requests",
-            "https://github.com/pythoneda-shared-code-requests/events",
-            "E",
-            "D",
-            "D")
-
     def latest_PythonedaSharedCodeRequestsEventsInfrastructure_version(self) -> str:
         """
         Retrieves the version of the latest Nix flake for pythoneda-shared-code-requests/events-infrastructure.
@@ -942,6 +1077,36 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "E",
             "D",
             "I")
+
+    def latest_PythonedaSharedCodeRequestsJupyterlab_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for pythoneda-shared-code-requests/jupyterlab.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("pythoneda-shared-code-requests", "jupyterlab-artifact")
+
+    def find_PythonedaSharedCodeRequestsJupyterlab_version(self, version:str) -> NixFlake:
+        """
+        Retrieves a specific version of the Nix flake for pythoneda-shared-code-requests/jupyterlab.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.shared.nix_flake.NixFlake
+        """
+        return PythonedaNixFlake(
+            "pythoneda-shared-code-requests-jupyterlab",
+            version,
+            f"github:pythoneda-shared-code-requests/jupyterlab-artifact/{version}?dir=jupyterlab",
+            self.default_latest_flakes() + [
+                self.latest_PythonedaSharedArtifactChangesShared(),
+                self.latest_PythonedaSharedCodeRequestsShared()
+            ],
+            "Shared kernel for Jupyterlab code requests",
+            "https://github.com/pythoneda-shared-code-requests/jupyterlab",
+            "D",
+            "S",
+            "D")
 
     def latest_PythonedaSharedCodeRequestsShared_version(self) -> str:
         """
@@ -1135,7 +1300,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "requests",
             version,
             f"github:rydnr/nix-flakes/requests-{version}?dir=requests",
-            [],
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Nixpkgs' requests",
             "https://github.com/psf/requests",
@@ -1164,7 +1329,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "stringtemplate3",
             version,
             f"github:rydnr/nix-flakes/stringtemplate3-{version}?dir=stringtemplate3",
-            [],
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Stringtemplate3 Python port",
             "https://stringtemplate.org",
@@ -1193,7 +1358,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "unidiff",
             version,
             f"github:rydnr/nix-flakes/unidiff-{version}?dir=unidiff",
-            [],
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
             None,
             "Simple Python library to parse and interact with unified diff data.",
             "https://github.com/matiasb/python-unidiff",
@@ -1210,12 +1375,15 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :return: The matching Nix flake, or None if none could be found.
         :rtype: pythoneda.shared.nix_flake.NixFlake
         """
-        # TODO: be able to retrieve at least PythonEDA and rydnr/nix-flakes flakes
         result = None
-        if spec.name == "jupyterlab-code-request":
+        if spec.name == "code-request-for-execution":
+            result = self.latest_code_execution(spec.code_request)
+        elif spec.name == "jupyterlab-code-request":
             result = self.latest_Jupyterlab_for_code_requests(spec.code_request)
         else:
-            result = self.flake_mapping()[spec.name]
+            result = self.flake_mapping().get(spec.name, None)
+            if result is not None:
+                result = result()
 
         if result is None:
             NixFlakeGitRepo.logger().error(f"Cannot resolve {spec}")
@@ -1231,20 +1399,39 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         result = self._flake_mapping
         if result is None:
             result = {}
-            result["pythoneda-shared-pythoneda-banner"] = self.latest_PythonedaSharedPythonedaBanner()
-            result["pythoneda-shared-pythoneda-domain"] = self.latest_PythonedaSharedPythonedaDomain()
-            result["nixos"] = self.latest_Nixos()
-            result["flake-utils"] = self.latest_FlakeUtils()
-            result["pythoneda-shared-pythoneda-infrastructure"] = self.latest_PythonedaSharedPythonedaInfrastructure()
-            result["pythoneda-shared-pythoneda-application"] = self.latest_PythonedaSharedPythonedaApplication()
-            result["pythoneda-shared-git-shared"] = self.latest_PythonedaSharedGitShared()
-            result["pythoneda-shared-nix-flake-shared"]= self.latest_PythonedaSharedNixFlakeShared()
-            result["pythoneda-shared-artifact-changes-shared"] = self.latest_PythonedaSharedArtifactChangesShared()
-            result["pythoneda-shared-artifact-changes-events"] = self.latest_PythonedaSharedArtifactChangesEvents()
-            result["pythoneda-shared-artifact-changes-events-infrastructure"] = self.latest_PythonedaSharedArtifactChangesEventsInfrastructure()
-            result["pythoneda-shared-code-requests-shared"] = self.latest_PythonedaSharedCodeRequestsShared()
-            result["pythoneda-shared-code-requests-events"] = self.latest_PythonedaSharedCodeRequestsEvents()
-            result["pythoneda-shared-code-requests-events-infrastructure"] = self.latest_PythonedaSharedCodeRequestsEventsInfrastructure()
-            result["jupyterlab"] = self.latest_Jupyterlab()
+            result["cachetools"] = self.latest_Cachetools
+            result["dbus-next"] = self.latest_DbusNext
+            result["flake-utils"] = self.latest_FlakeUtils
+            result["grpcio"] = self.latest_Grpcio
+            result["joblib"] = self.latest_Joblib
+            result["jupyterlab"] = self.latest_Jupyterlab
+            result["nbformat"] = self.latest_Nbformat
+            result["nixos"] = self.latest_Nixos
+            result["pythoneda-artifact-code-request-application"] = self.latest_PythonedaArtifactCodeRequestApplication
+            result["pythoneda-artifact-code-request-infrastructure"] = self.latest_PythonedaArtifactCodeRequestInfrastructure
+            result["pythoneda-artifact-git"] = self.latest_PythonedaArtifactGit
+            result["pythoneda-artifact-git-application"] = self.latest_PythonedaArtifactGitApplication
+            result["pythoneda-artifact-git-infrastructure"] = self.latest_PythonedaArtifactGitInfrastructure
+            result["pythoneda-artifact-nix-flake"] = self.latest_PythonedaArtifactNixFlake
+            result["pythoneda-artifact-nix-flake-application"] = self.latest_PythonedaArtifactNixFlakeApplication
+            result["pythoneda-artifact-nix-flake-infrastructure"] = self.latest_PythonedaArtifactNixFlakeInfrastructure
+            result["pythoneda-realm-rydnr-application"] = self.latest_PythonedaRealmRydnrApplication
+            result["pythoneda-realm-rydnr-infrastructure"] = self.latest_PythonedaRealmRydnrInfrastructure
+            result["pythoneda-realm-rydnr-realm"] = self.latest_PythonedaRealmRydnrRealm
+            result["pythoneda-shared-artifact-changes-events"] = self.latest_PythonedaSharedArtifactChangesEvents
+            result["pythoneda-shared-artifact-changes-events-infrastructure"] = self.latest_PythonedaSharedArtifactChangesEventsInfrastructure
+            result["pythoneda-shared-artifact-changes-shared"] = self.latest_PythonedaSharedArtifactChangesShared
+            result["pythoneda-shared-code-requests-events"] = self.latest_PythonedaSharedCodeRequestsEvents
+            result["pythoneda-shared-code-requests-events-infrastructure"] = self.latest_PythonedaSharedCodeRequestsEventsInfrastructure
+            result["pythoneda-shared-code-requests-shared"] = self.latest_PythonedaSharedCodeRequestsShared
+            result["pythoneda-shared-git-shared"] = self.latest_PythonedaSharedGitShared
+            result["pythoneda-shared-nix-flake-shared"]= self.latest_PythonedaSharedNixFlakeShared
+            result["pythoneda-shared-pythoneda-application"] = self.latest_PythonedaSharedPythonedaApplication
+            result["pythoneda-shared-pythoneda-banner"] = self.latest_PythonedaSharedPythonedaBanner
+            result["pythoneda-shared-pythoneda-domain"] = self.latest_PythonedaSharedPythonedaDomain
+            result["pythoneda-shared-pythoneda-infrastructure"] = self.latest_PythonedaSharedPythonedaInfrastructure
+            result["requests"] = self.latest_Requests
+            result["stringtemplate3"] = self.latest_Stringtemplate3
+            result["unidiff"] = self.latest_Unidiff
             self._flake_mapping = result
         return result

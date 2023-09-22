@@ -18,10 +18,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-from dbus_next import BusType, Message
-from pythoneda.event import Event
-from pythoneda.shared.artifact_changes.events import ChangeStagingCodeDescribed
-from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeDescribed
+from dbus_next import BusType
+from pythoneda.shared.artifact_changes.events import ChangeStagingCodeDescribed, ChangeStagingCodeExecutionRequested
+from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeDescribed, DbusChangeStagingCodeExecutionRequested
 from pythoneda.infrastructure.dbus import DbusSignalListener
 from typing import Dict
 
@@ -34,11 +33,12 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
 
     Responsibilities:
         - Connect to d-bus.
-        - Listen to signals relevant to nix-flake-artifact.
+        - Listen to signals relevant to nix-flake artifact.
 
     Collaborators:
         - pythoneda.application.pythoneda.PythonEDA: Receives relevant domain events.
         - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeDescribed
+        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeExecutionRequested
     """
 
     def __init__(self):
@@ -59,5 +59,9 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         key = self.__class__.full_class_name(ChangeStagingCodeDescribed)
         result[key] = [
             DbusChangeStagingCodeDescribed, BusType.SYSTEM
+        ]
+        key = self.__class__.full_class_name(ChangeStagingCodeExecutionRequested)
+        result[key] = [
+            DbusChangeStagingCodeExecutionRequested, BusType.SYSTEM
         ]
         return result

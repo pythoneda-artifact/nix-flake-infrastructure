@@ -44,8 +44,8 @@ class GithubTokenCli(BaseObject, PrimaryPort):
         """
         parser = argparse.ArgumentParser(description="Provide the Github token")
         parser.add_argument(
-            "-t", "--github-token", required=True, help="The github token"
+            "-t", "--github-token", required=False, help="The github token"
         )
         args, unknown_args = parser.parse_known_args()
 
-        app.github_token(args.github_token)
+        app.accept_github_token(args.github_token)
