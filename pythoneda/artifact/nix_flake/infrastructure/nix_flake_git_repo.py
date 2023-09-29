@@ -1079,7 +1079,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             self.default_latest_flakes() + [
                 self.latest_Jupyterlab(),
                 self.latest_Nbformat(),
-                self.latest_PythonedaSharedCodeRequestsShared()
+                self.latest_PythonedaSharedCodeRequestsShared(),
                 self.latest_PythonedaSharedNixFlakeShared(),
             ],
             "Shared kernel for Jupyterlab code requests",
