@@ -21,14 +21,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 from joblib import Memory
 from datetime import datetime
 from pythoneda import BaseObject
-from pythoneda.artifact.nix_flake import NixFlakeRepo
-from pythoneda.artifact.nix_flake import CodeExecutionNixFlakeFactory
+from pythoneda.artifact.nix_flake import CodeExecutionNixFlakeFactory, NixFlakeRepo
 from pythoneda.artifact.nix_flake.jupyterlab import JupyterlabCodeRequestNixFlakeFactory
 from pythoneda.shared.code_requests import CodeExecutionNixFlake, CodeRequest
 from pythoneda.shared.code_requests.jupyterlab import JupyterlabCodeRequestNixFlake
 from pythoneda.shared.nix_flake import FlakeUtilsNixFlake, NixFlake, NixFlakeSpec, NixosNixFlake, PythonedaNixFlake, PythonedaSharedPythonedaBannerNixFlake, PythonedaSharedPythonedaDomainNixFlake
 import requests
-from typing import Dict, List
+from typing import Dict
 
 class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
 
@@ -234,6 +233,35 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             2019,
             "https://github.com/altdesktop/python-dbus-next")
 
+    def latest_Dulwich_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for dulwich.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "dulwich-")
+
+    def find_Dulwich_version(self, version:str) -> NixFlake:
+        """
+        Retrieves the latest version of the nix flake for dulwich.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "dulwich",
+            version,
+            f"github:rydnr/nix-flakes/dulwich-{version}?dir=dulwich",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
+            None,
+            "Nixpkgs' dulwich",
+            "https://github.com/dulwich/dulwich",
+            "asl20",
+            [ ],
+            2008,
+            "https://www.dulwich.io/")
+
     def latest_code_execution(self, codeRequest:CodeRequest) -> CodeExecutionNixFlake:
         """
         Retrieves the latest version of the nix flake for executing code.
@@ -243,6 +271,35 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :rtype: pythoneda.shared.code_requests.CodeExecutionNixFlake
         """
         return CodeExecutionNixFlakeFactory.instance().create(codeRequest, self.default_latest_flakes())
+
+    def latest_GitPython_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for GitPython.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "GitPython-")
+
+    def find_GitPython_version(self, version:str) -> NixFlake:
+        """
+        Retrieves the latest version of the nix flake for GitPython.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "GitPython",
+            version,
+            f"github:rydnr/nix-flakes/GitPython-{version}?dir=GitPython",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
+            None,
+            "Nixpkgs' GitPython",
+            "https://github.com/gitpython-developers/GitPython",
+            "bsd",
+            [ ],
+            2010,
+            "https://github.com/gitpython-developers/GitPython")
 
     def latest_Grpcio_version(self) -> str:
         """
@@ -407,6 +464,35 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         """
         return NixosNixFlake(version)
 
+    def latest_Paramiko_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for paramiko.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "paramiko-")
+
+    def find_Paramiko_version(self, version:str) -> NixFlake:
+        """
+        Retrieves the latest version of the nix flake for paramiko.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "paramiko",
+            version,
+            f"github:rydnr/nix-flakes/paramiko-{version}?dir=paramiko",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
+            None,
+            "Nixpkgs' paramiko",
+            "https://github.com/paramiko/paramiko",
+            "gplv3", # it's LGPL actually
+            [ ],
+            2004,
+            "https://paramiko.org/")
+
     def latest_PythonedaRealmRydnrApplication_version(self) -> str:
         """
         Retrieves the version of the latest Nix flake for pythoneda-realm-rydnr/application.
@@ -428,27 +514,10 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-realm-rydnr/application-artifact/{version}?dir=application",
             self.default_latest_flakes() + [
-                self.latest_DbusNext(),
-                self.latest_Grpcio(),
-                self.latest_Jupyterlab(),
-                self.latest_Nbformat(),
-                self.latest_PythonedaRealmRydnrEvents(),
-                self.latest_PythonedaRealmRydnrEventsInfrastructure(),
+                self.latest_PythonedaRealmRydnrInfrastructure(),
                 self.latest_PythonedaRealmRydnrRealm(),
-                self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
                 self.latest_PythonedaSharedPythonedaApplication(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Unidiff(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaInfrastructure()
             ],
             "Infrastructure layer for pythoneda-realm-rydnr/realm",
             "https://github.com/pythoneda-realm-rydnr/infrastructure",
@@ -504,6 +573,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-realm-rydnr/events-infrastructure-artifact/{version}?dir=events-infrastructure",
             self.default_latest_flakes() + [
+                self.latest_DbusNext(),
                 self.latest_PythonedaRealmRydnrEvents(),
                 self.latest_PythonedaSharedPythonedaInfrastructure()
             ],
@@ -535,25 +605,11 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             f"github:pythoneda-realm-rydnr/infrastructure-artifact/{version}?dir=infrastructure",
             self.default_latest_flakes() + [
                 self.latest_DbusNext(),
-                self.latest_Grpcio(),
-                self.latest_Jupyterlab(),
-                self.latest_Nbformat(),
                 self.latest_PythonedaRealmRydnrEvents(),
                 self.latest_PythonedaRealmRydnrEventsInfrastructure(),
-                self.latest_PythonedaRealmRydnrRealm(),
                 self.latest_PythonedaSharedArtifactChangesEvents(),
                 self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Unidiff(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaInfrastructure()
             ],
             "Infrastructure layer for pythoneda-realm-rydnr/realm",
             "https://github.com/pythoneda-realm-rydnr/infrastructure",
@@ -585,11 +641,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
                 self.latest_PythonedaRealmRydnrEvents(),
                 self.latest_PythonedaSharedArtifactChangesEvents(),
                 self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
                 self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedGitShared()
             ],
             "Realm for pythoneda-realm-rydnr",
             "https://github.com/pythoneda-realm-rydnr/realm",
@@ -650,9 +703,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             f"github:pythoneda-shared-artifact-changes/events-infrastructure-artifact/{version}?dir=events-infrastructure",
             self.default_latest_flakes() + [
                 self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
+                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
                 self.latest_PythonedaSharedPythonedaInfrastructure() ],
             "Infrastructure layer for events relevant to artifact changes",
             "https://github.com/pythoneda-shared-artifact-changes/events-infrastructure",
@@ -680,7 +731,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "pythoneda-shared-artifact-changes-shared",
             version,
             f"github:pythoneda-shared-artifact-changes/shared-artifact/{version}?dir=shared",
-            self.default_latest_flakes(),
+            self.default_latest_flakes() + [ self.latest_Unidiff() ],
             "A shared kernel used by artifact domains for dealing with changes in source code",
             "https://github.com/pythoneda-shared-artifact-changes/shared",
             "S",
@@ -708,22 +759,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-artifact/code-request-application-artifact/{version}?dir=code-request-application",
             self.default_latest_flakes() + [
-                self.latest_DbusNext(),
-                self.latest_Grpcio(),
                 self.latest_PythonedaArtifactCodeRequestInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaApplication(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaApplication()
             ],
             "Application layer for code requests",
             "https://github.com/pythoneda-artifact/code-request-application",
@@ -753,19 +790,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             f"github:pythoneda-artifact/code-request-infrastructure-artifact/{version}?dir=code-request-infrastructure",
             self.default_latest_flakes() + [
                 self.latest_DbusNext(),
-                self.latest_Grpcio(),
                 self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure()
             ],
             "Infrastructure layer for code requests",
             "https://github.com/pythoneda-artifact/code-request-infrastructure",
@@ -796,12 +822,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             self.default_latest_flakes() + [
                 self.latest_PythonedaSharedArtifactChangesEvents(),
                 self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
                 self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedCodeRequestsShared()
             ],
             "Domain of git artifacts",
             "https://github.com/pythoneda-artifact/git",
@@ -830,23 +852,9 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-artifact/git-application-artifact/{version}?dir=git-application",
             self.default_latest_flakes() + [
-                self.latest_DbusNext(),
-                self.latest_Grpcio(),
                 self.latest_PythonedaArtifactGit(),
                 self.latest_PythonedaArtifactGitInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaApplication(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaApplication()
             ],
             "Application layer of pythoneda-artifact/git",
             "https://github.com/pythoneda-artifact/git-application",
@@ -876,20 +884,9 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             f"github:pythoneda-artifact/git-infrastructure-artifact/{version}?dir=git-infrastructure",
             self.default_latest_flakes() + [
                 self.latest_DbusNext(),
-                self.latest_Grpcio(),
-                self.latest_PythonedaArtifactGit(),
                 self.latest_PythonedaSharedArtifactChangesEvents(),
                 self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaInfrastructure()
             ],
             "Infrastructure layer of pythoneda-artifact/git",
             "https://github.com/pythoneda-artifact/git-infrastructure",
@@ -918,9 +915,11 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"nix-flakehub:pythoneda-artifact/nix-flake-artifact/{version}?dir=nix-flake",
             self.default_latest_flakes() + [
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedArtifactChangesEvents(),
+                self.latest_PythonedaSharedCodeRequestsEvents(),
+                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
+                self.latest_PythonedaSharedCodeRequestsShared(),
+                self.latest_PythonedaSharedNixFlakeShared()
             ],
             "Domain of the Nix Flake artifact",
             "https://nix-flakehub.com/pythoneda-artifact/nix-flake",
@@ -949,23 +948,9 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"nix-flakehub:pythoneda-artifact/nix-flake-application-artifact/{version}?dir=nix-flake-application",
             self.default_latest_flakes() + [
-                self.latest_DbusNext(),
-                self.latest_Grpcio(),
                 self.latest_PythonedaArtifactNixFlake(),
                 self.latest_PythonedaArtifactNixFlakeInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesEvents(),
-                self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
-                self.latest_PythonedaSharedCodeRequestsJupyterlab(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
-                self.latest_PythonedaSharedNixFlakeShared(),
-                self.latest_PythonedaSharedPythonedaApplication(),
-                self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_PythonedaSharedPythonedaApplication()
             ],
             "Application layer of pythoneda-artifact/nix-flake",
             "https://nix-flakehub.com/pythoneda-artifact/nix-flake-application",
@@ -990,28 +975,23 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
         :rtype: pythoneda.shared.nix_flake.NixFlake
         """
         return PythonedaNixFlake(
-            "pythoneda-artifact-git-infrastructure",
+            "pythoneda-artifact-nix-flake-infrastructure",
             version,
-            f"github:pythoneda-artifact/git-infrastructure-artifact/{version}?dir=git-infrastructure",
+            f"github:pythoneda-artifact/nix-flake-infrastructure-artifact/{version}?dir=nix-flake-infrastructure",
             self.default_latest_flakes() + [
                 self.latest_DbusNext(),
-                self.latest_Grpcio(),
+                self.latest_Joblib(),
                 self.latest_PythonedaArtifactNixFlake(),
                 self.latest_PythonedaSharedArtifactChangesEvents(),
                 self.latest_PythonedaSharedArtifactChangesEventsInfrastructure(),
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsEventsInfrastructure(),
                 self.latest_PythonedaSharedCodeRequestsJupyterlab(),
                 self.latest_PythonedaSharedCodeRequestsShared(),
-                self.latest_PythonedaSharedGitShared(),
                 self.latest_PythonedaSharedNixFlakeShared(),
                 self.latest_PythonedaSharedPythonedaInfrastructure(),
-                self.latest_Requests(),
-                self.latest_Stringtemplate3()
+                self.latest_Requests()
             ],
-            "Infrastructure layer of pythoneda-artifact/git",
-            "https://github.com/pythoneda-artifact/git-infrastructure",
+            "Infrastructure layer of pythoneda-artifact/nix-flake",
+            "https://github.com/pythoneda-artifact/nix-flake-infrastructure",
             "B",
             "D",
             "I")
@@ -1038,7 +1018,8 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             f"github:pythoneda-shared-code-requests/events-artifact/{version}?dir=events",
             self.default_latest_flakes() + [
                 self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsShared()
+                self.latest_PythonedaSharedCodeRequestsShared(),
+                self.latest_PythonedaSharedNixFlakeShared()
             ],
             "Events relevant to code requests",
             "https://github.com/pythoneda-shared-code-requests/events",
@@ -1067,9 +1048,6 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-shared-code-requests/events-infrastructure-artifact/{version}?dir=events-infrastructure",
             self.default_latest_flakes() + [
-                self.latest_PythonedaSharedArtifactChangesShared(),
-                self.latest_PythonedaSharedCodeRequestsEvents(),
-                self.latest_PythonedaSharedCodeRequestsShared(),
                 self.latest_PythonedaSharedPythonedaInfrastructure()
             ],
             "Infrastructure layer for events relevant to code requests",
@@ -1099,8 +1077,10 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             version,
             f"github:pythoneda-shared-code-requests/jupyterlab-artifact/{version}?dir=jupyterlab",
             self.default_latest_flakes() + [
-                self.latest_PythonedaSharedArtifactChangesShared(),
+                self.latest_Jupyterlab(),
+                self.latest_Nbformat(),
                 self.latest_PythonedaSharedCodeRequestsShared()
+                self.latest_PythonedaSharedNixFlakeShared(),
             ],
             "Shared kernel for Jupyterlab code requests",
             "https://github.com/pythoneda-shared-code-requests/jupyterlab",
@@ -1128,7 +1108,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "pythoneda-shared-code-requests-shared",
             version,
             f"github:pythoneda-shared-code-requests/shared-artifact/{version}?dir=shared",
-            self.default_latest_flakes(),
+            self.default_latest_flakes() + [ self.latest_PythonedaSharedNixFlakeShared() ],
             "Shared kernel modelled after code requests",
             "https://github.com/pythoneda-shared-code-requests/shared",
             "S",
@@ -1155,7 +1135,7 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             "pythoneda-shared-git-shared",
             version,
             f"github:pythoneda-shared-git/shared-artifact/{version}?dir=shared",
-            self.default_latest_flakes(),
+            self.default_latest_flakes() + [ self.latest_Dulwich(), self.latest_GitPython(), self.latest_Paramiko(), self.latest_Semver() ],
             "Shared kernel modelled after git concepts",
             "https://github.com/pythoneda-shared-git/shared",
             "S",
@@ -1308,6 +1288,35 @@ class NixFlakeGitRepo(NixFlakeRepo, BaseObject):
             [ ],
             2011,
             "https://github.com/psf/requests")
+
+    def latest_Semver_version(self) -> str:
+        """
+        Retrieves the version of the latest Nix flake for semver.
+        :return: Such version.
+        :rtype: str
+        """
+        return self.get_latest_github_tag("rydnr", "nix-flakes", "semver-")
+
+    def find_Semver_version(self, version:str) -> NixFlake:
+        """
+        Retrieves the latest version of the nix flake for semver.
+        :param version: The version.
+        :type version: str
+        :return: Such flake, or None if not found.
+        :rtype: pythoneda.artifact.nix_flake.NixFlake
+        """
+        return NixFlake(
+            "semver",
+            version,
+            f"github:rydnr/nix-flakes/semver-{version}?dir=semver",
+            [ self.latest_Nixos(), self.latest_FlakeUtils() ],
+            None,
+            "Nixpkgs' semver",
+            "https://github.com/python-semver/python-semver",
+            "bsd",
+            [ ],
+            2012,
+            "https://python-semver.readthedocs.io/en/latest/")
 
     def latest_Stringtemplate3_version(self) -> str:
         """
