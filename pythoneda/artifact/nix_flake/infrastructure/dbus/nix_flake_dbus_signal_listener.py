@@ -19,10 +19,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 from dbus_next import BusType
-from pythoneda.shared.artifact_changes.events import ChangeStagingCodeDescribed, ChangeStagingCodeExecutionRequested
-from pythoneda.shared.artifact_changes.events.infrastructure.dbus import DbusChangeStagingCodeDescribed, DbusChangeStagingCodeExecutionRequested
+from pythoneda.shared.artifact_changes.events.code import (
+    ChangeStagingCodeDescribed,
+    ChangeStagingCodeExecutionRequested,
+)
+from pythoneda.shared.artifact_changes.events.code.infrastructure.dbus import (
+    DbusChangeStagingCodeDescribed,
+    DbusChangeStagingCodeExecutionRequested,
+)
 from pythoneda.infrastructure.dbus import DbusSignalListener
 from typing import Dict
+
 
 class NixFlakeDbusSignalListener(DbusSignalListener):
 
@@ -37,8 +44,8 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
 
     Collaborators:
         - pythoneda.application.pythoneda.PythonEDA: Receives relevant domain events.
-        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeDescribed
-        - pythoneda.shared.artifact_changes.events.infrastructure.dbus.DbusChangeStagingCodeExecutionRequested
+        - pythoneda.shared.artifact.events.code.infrastructure.dbus.DbusChangeStagingCodeDescribed
+        - pythoneda.shared.artifact.events.code.infrastructure.dbus.DbusChangeStagingCodeExecutionRequested
     """
 
     def __init__(self):
@@ -57,11 +64,7 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         """
         result = {}
         key = self.__class__.full_class_name(ChangeStagingCodeDescribed)
-        result[key] = [
-            DbusChangeStagingCodeDescribed, BusType.SYSTEM
-        ]
+        result[key] = [DbusChangeStagingCodeDescribed, BusType.SYSTEM]
         key = self.__class__.full_class_name(ChangeStagingCodeExecutionRequested)
-        result[key] = [
-            DbusChangeStagingCodeExecutionRequested, BusType.SYSTEM
-        ]
+        result[key] = [DbusChangeStagingCodeExecutionRequested, BusType.SYSTEM]
         return result
