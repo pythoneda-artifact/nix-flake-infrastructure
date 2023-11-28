@@ -19,11 +19,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 from dbus_next import BusType
-from pythoneda.shared.artifact_changes.events.code import (
+from pythoneda.shared.artifact.events.code import (
     ChangeStagingCodeDescribed,
     ChangeStagingCodeExecutionRequested,
 )
-from pythoneda.shared.artifact_changes.events.code.infrastructure.dbus import (
+from pythoneda.shared.artifact.events.code.infrastructure.dbus import (
     DbusChangeStagingCodeDescribed,
     DbusChangeStagingCodeExecutionRequested,
 )
