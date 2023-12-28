@@ -20,17 +20,17 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import argparse
 from pythoneda import BaseObject, PrimaryPort
-import sys
+
 
 class GithubTokenCli(BaseObject, PrimaryPort):
 
     """
-    A PrimaryPort that extracts the Github token from the CLI.
+    A PrimaryPort that extracts the GitHub token from the CLI.
 
     Class name: GithubTokenCli
 
     Responsibilities:
-        - Parse the command-line to retrieve the Github token.
+        - Parse the command-line to retrieve the GitHub token.
 
     Collaborators:
         None
