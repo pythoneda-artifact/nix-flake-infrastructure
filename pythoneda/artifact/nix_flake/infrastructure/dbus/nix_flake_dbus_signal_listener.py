@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8
 """
 pythoneda/artifact/nix_flake/infrastructure/dbus/nix_flake_dbus_signal_listener.py
 
@@ -27,7 +28,7 @@ from pythoneda.shared.artifact.events.code.infrastructure.dbus import (
     DbusChangeStagingCodeDescribed,
     DbusChangeStagingCodeExecutionRequested,
 )
-from pythoneda.infrastructure.dbus import DbusSignalListener
+from pythoneda.shared.infrastructure.dbus import DbusSignalListener
 from typing import Dict
 
 
@@ -43,7 +44,7 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         - Listen to signals relevant to nix-flake artifact.
 
     Collaborators:
-        - pythoneda.application.pythoneda.PythonEDA: Receives relevant domain events.
+        - pythoneda.shared.application.PythonEDA: Receives relevant domain events.
         - pythoneda.shared.artifact.events.code.infrastructure.dbus.DbusChangeStagingCodeDescribed
         - pythoneda.shared.artifact.events.code.infrastructure.dbus.DbusChangeStagingCodeExecutionRequested
     """
@@ -58,7 +59,7 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         """
         Retrieves the configured signal receivers.
         :param app: The PythonEDA instance.
-        :type app: pythoneda.application.PythonEDA
+        :type app: pythoneda.shared.application.PythonEDA
         :return: A dictionary with the signal name as key, and the tuple interface and bus type as the value.
         :rtype: Dict
         """

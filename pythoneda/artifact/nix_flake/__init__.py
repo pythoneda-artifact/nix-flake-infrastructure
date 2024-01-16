@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8
 """
 pythoneda/artifact/nix_flake/__init__.py
 

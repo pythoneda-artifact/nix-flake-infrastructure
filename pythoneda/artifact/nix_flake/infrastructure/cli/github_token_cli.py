@@ -1,3 +1,4 @@
+# vim: set fileencoding=utf-8
 """
 pythoneda/artifact/nix_flake/infrastructure/cli/github_token_cli.py
 
@@ -19,7 +20,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import argparse
-from pythoneda import BaseObject, PrimaryPort
+from pythoneda.shared import BaseObject, PrimaryPort
 
 
 class GithubTokenCli(BaseObject, PrimaryPort):
@@ -40,7 +41,7 @@ class GithubTokenCli(BaseObject, PrimaryPort):
         """
         Processes the command specified from the command line.
         :param app: The PythonEDA instance.
-        :type app: PythonEDA
+        :type app: pythoneda.shared.application.PythonEDA
         """
         parser = argparse.ArgumentParser(description="Provide the Github token")
         parser.add_argument(
