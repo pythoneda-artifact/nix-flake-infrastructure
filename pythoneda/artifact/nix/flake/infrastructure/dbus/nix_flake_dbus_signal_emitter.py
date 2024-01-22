@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8
 """
-pythoneda/artifact/nix_flake/infrastructure/dbus/git_dbus_signal_emitter.py
+pythoneda/artifact/nix/flake/infrastructure/dbus/git_dbus_signal_emitter.py
 
 This file defines the NixFlakeDbusSignalEmitter class.
 
@@ -68,6 +68,8 @@ class NixFlakeDbusSignalEmitter(DbusSignalEmitter):
         result[key] = [DbusChangeStagingCodeExecutionPackaged, BusType.SYSTEM]
 
         return result
+
+
 # vim: syntax=python ts=4 sw=4 sts=4 tw=79 sr et
 # Local Variables:
 # mode: python

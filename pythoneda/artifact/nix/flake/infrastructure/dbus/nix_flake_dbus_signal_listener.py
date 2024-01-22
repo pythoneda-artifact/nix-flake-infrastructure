@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8
 """
-pythoneda/artifact/nix_flake/infrastructure/dbus/nix_flake_dbus_signal_listener.py
+pythoneda/artifact/nix/flake/infrastructure/dbus/nix_flake_dbus_signal_listener.py
 
 This file defines the NixFlakeDbusSignalListener class.
 
@@ -69,6 +69,8 @@ class NixFlakeDbusSignalListener(DbusSignalListener):
         key = self.__class__.full_class_name(ChangeStagingCodeExecutionRequested)
         result[key] = [DbusChangeStagingCodeExecutionRequested, BusType.SYSTEM]
         return result
+
+
 # vim: syntax=python ts=4 sw=4 sts=4 tw=79 sr et
 # Local Variables:
 # mode: python
